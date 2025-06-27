@@ -1,17 +1,19 @@
 # GTN Engineering IT Helpdesk System
 
-A comprehensive Flask-based IT helpdesk management system designed for professional IT support operations. Features role-based access control, automatic system detection, ticket lifecycle management, and advanced reporting capabilities.
+A comprehensive Flask-based IT helpdesk management system designed for professional IT support operations. Successfully migrated to Replit environment with enhanced security, PostgreSQL database integration, and improved ticket history tracking.
 
 ![Python](https://img.shields.io/badge/python-v3.11+-blue.svg)
 ![Flask](https://img.shields.io/badge/flask-v2.3+-green.svg)
 ![PostgreSQL](https://img.shields.io/badge/postgresql-v15+-blue.svg)
 ![Bootstrap](https://img.shields.io/badge/bootstrap-v5.3+-purple.svg)
+![Replit](https://img.shields.io/badge/replit-compatible-orange.svg)
 
 ## Features
 
 ### 🎯 Core Functionality
 - **Role-Based Access Control**: Three user levels (Super Admin, Admin, User)
 - **Ticket Management**: Complete lifecycle from creation to resolution
+- **Enhanced Ticket History**: New streamlined format showing Created By, Assigned By, Assigned To, and Status with colored badges
 - **File Upload Support**: Secure attachment system supporting images, PDF, Word, and Excel files
 - **System Detection**: Automatic IP address and system name capture
 - **Real-time Updates**: Live ticket status tracking and notifications
@@ -51,32 +53,37 @@ A comprehensive Flask-based IT helpdesk management system designed for professio
 - **Production**: Linux (Ubuntu 20.04+, CentOS 8+), Windows Server
 - **Browsers**: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
 
-## Quick Start
+## Quick Start (Replit Environment)
 
-### 1. Clone Repository
+### 1. Replit Setup
+The system is now optimized for Replit deployment with automatic setup:
+- PostgreSQL database automatically provisioned
+- Environment variables pre-configured
+- Dependencies auto-installed via Replit's package system
+
+### 2. Default Login Credentials
+The system creates default accounts on first run:
+- **Super Admin**: `super_admin` / `admin123`
+- **Admin**: `admin_user` / `admin123`
+- **Test User**: `test_user` / `user123`
+
+### 3. Run Application
+```bash
+gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app
+```
+
+The application will be available at your Replit URL on port 5000
+
+### 4. Local Development Setup (Alternative)
+For local development outside Replit:
 ```bash
 git clone <repository-url>
 cd gtn-helpdesk-system
-```
-
-### 2. Install Dependencies
-```bash
 pip install -r requirements.txt
-```
-
-### 3. Database Setup
-Set your database connection:
-```bash
 export DATABASE_URL="postgresql://username:password@localhost:5432/gtn_helpdesk"
 export SESSION_SECRET="your-secret-key-here"
-```
-
-### 4. Run Application
-```bash
 python main.py
 ```
-
-The application will be available at `http://localhost:5000`
 
 ## Installation Guide
 
@@ -494,6 +501,25 @@ tar -czf app_backup_$(date +%Y%m%d).tar.gz /path/to/app
 3. **Backup First**: Create full backup before updates
 4. **Gradual Rollout**: Deploy to small user groups first
 
+## Recent Updates & Changelog
+
+### June 27, 2025 - v2.1.0 (Replit Migration & Enhanced Features)
+- **Replit Integration**: Successfully migrated from Replit Agent to Replit environment
+- **Automatic PostgreSQL**: Database provisioning and setup now fully automated
+- **Enhanced Ticket History**: Redesigned ticket history sidebar with cleaner format:
+  - Created By: Shows ticket creator with timestamp
+  - Assigned By: Shows who assigned the ticket (or "Not assigned")
+  - Assigned To: Shows current assignee (or "Not assigned")
+  - Status: Current status with colored badge
+- **Bug Fixes**: Resolved edit ticket template errors and property access issues
+- **Security**: Enhanced client/server separation and secure configuration
+
+### Previous Major Updates
+- **June 26, 2025 - v2.0.5**: Enhanced user management with complete CRUD operations
+- **June 23, 2025 - v2.0.4**: Improved file upload system supporting PDF, Word, Excel files
+- **June 22, 2025 - v2.0.3**: Added visual reports dashboard and MySQL support
+- **June 21, 2025 - v2.0.0**: Initial PostgreSQL integration and setup
+
 ## License
 
 This project is proprietary software developed for GTN Engineering (India) Ltd.
@@ -510,5 +536,5 @@ For technical support or questions:
 **GTN Engineering (India) Ltd - IT Team**  
 *Professional IT Support Solutions*
 
-Last Updated: June 22, 2025  
-Version: 2.0.0
+Last Updated: June 27, 2025  
+Version: 2.1.0

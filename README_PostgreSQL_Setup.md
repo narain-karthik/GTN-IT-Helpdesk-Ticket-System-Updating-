@@ -1,20 +1,52 @@
-# PostgreSQL Setup Guide for Windows
+# PostgreSQL Setup Guide
 **GTN Engineering IT Helpdesk System**
 
-This guide will help you set up PostgreSQL on your Windows PC and configure it for the GTN Engineering IT Helpdesk System.
+This guide covers PostgreSQL setup for both Replit environment (automatic) and local development environments (manual setup).
 
 ## Table of Contents
-1. [Download and Install PostgreSQL](#1-download-and-install-postgresql)
-2. [Configure PostgreSQL](#2-configure-postgresql)
-3. [Create Database and User](#3-create-database-and-user)
-4. [Set Up Database Tables](#4-set-up-database-tables)
-5. [Configure Application Connection](#5-configure-application-connection)
-6. [Test the Connection](#6-test-the-connection)
-7. [Troubleshooting](#7-troubleshooting)
+1. [Replit Environment Setup (Automatic)](#1-replit-environment-setup-automatic)
+2. [Local Development Setup (Windows)](#2-local-development-setup-windows)
+3. [Local Development Setup (macOS/Linux)](#3-local-development-setup-macoslinux)
+4. [Database Configuration](#4-database-configuration)
+5. [Troubleshooting](#5-troubleshooting)
+6. [Recent Updates](#6-recent-updates)
 
 ---
 
-## 1. Download and Install PostgreSQL
+## 1. Replit Environment Setup (Automatic)
+
+### ✅ Fully Automated Setup
+The GTN Engineering IT Helpdesk System is now optimized for Replit with automatic PostgreSQL provisioning:
+
+**What's Automatically Configured:**
+- PostgreSQL 15+ database instance
+- Database connection environment variables
+- All required Python dependencies
+- Database tables and initial data
+- Default user accounts (Super Admin, Admin, Test User)
+
+**Getting Started:**
+1. Fork or import the project in Replit
+2. Run the application - database setup happens automatically
+3. Access your application at the provided Replit URL
+4. Login with default credentials (see main README.md)
+
+**Environment Variables (Auto-Set):**
+```bash
+DATABASE_URL=postgresql://...  # Auto-generated
+PGHOST=...                     # Auto-configured
+PGPORT=5432                    # Auto-configured
+PGDATABASE=...                 # Auto-configured
+PGUSER=...                     # Auto-configured
+PGPASSWORD=...                 # Auto-configured
+SESSION_SECRET=...             # Auto-generated
+```
+
+No manual database setup required!
+
+---
+
+## 2. Local Development Setup (Windows)
 
 ### Step 1.1: Download PostgreSQL
 1. Visit the official PostgreSQL website: [https://www.postgresql.org/download/windows/](https://www.postgresql.org/download/windows/)
@@ -356,5 +388,25 @@ If you encounter issues not covered in this guide:
 
 ---
 
-**Last Updated**: June 22, 2025  
-**Compatible with**: PostgreSQL 15, 16+ on Windows 10/11
+## 6. Recent Updates
+
+### June 27, 2025 - Replit Migration & Enhanced Features
+- **Replit Integration**: Successfully migrated to Replit environment with automatic PostgreSQL provisioning
+- **Enhanced Ticket History**: Updated ticket history display with new format:
+  - Created By: Shows ticket creator with timestamp
+  - Assigned By: Shows who assigned the ticket (or "Not assigned")
+  - Assigned To: Shows current assignee (or "Not assigned") 
+  - Status: Shows current status with colored badge
+- **Bug Fixes**: Resolved edit ticket page errors and template issues
+- **Security Improvements**: Enhanced client/server separation and secure configuration
+
+### Previous Updates
+- **June 26, 2025**: Enhanced user management system with CRUD operations
+- **June 23, 2025**: Improved file upload system supporting PDF, Word, Excel files
+- **June 22, 2025**: Added visual reports dashboard and MySQL support
+- **June 21, 2025**: Initial PostgreSQL integration and setup
+
+---
+
+**Last Updated**: June 27, 2025  
+**Compatible with**: PostgreSQL 15, 16+ on Replit and local development environments
