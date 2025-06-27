@@ -196,7 +196,12 @@
                                         {% for ticket in recent_tickets %}
                                             <tr>
                                                 <td>{{ ticket.ticket_number }}</td>
-                                                <td>{{ ticket.title }}</td>
+                                                <td>
+                                                    {{ ticket.title }}
+                                                    {% if ticket.image_filename or ticket.attachments %}
+                                                        <i class="ri-attachment-line text-muted ms-1" title="Has attachments"></i>
+                                                    {% endif %}
+                                                </td>
                                                 <td>{{ ticket.user_name }}</td>
                                                 <td><code class="small">{{ ticket.user_ip_address or 'N/A' }}</code></td>
                                                 <td><code class="small">{{ ticket.user_system_name or 'N/A' }}</code></td>

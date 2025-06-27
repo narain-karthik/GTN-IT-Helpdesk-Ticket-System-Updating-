@@ -78,7 +78,12 @@
                                 {% for ticket in tickets %}
                                     <tr>
                                         <td>{{ ticket.ticket_number }}</td>
-                                        <td>{{ ticket.title }}</td>
+                                        <td>
+                                            {{ ticket.title }}
+                                            {% if ticket.image_filename or ticket.attachments %}
+                                                <i class="ri-attachment-line text-muted ms-1" title="Has attachments"></i>
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             <span class="badge bg-secondary">{{ ticket.category }}</span>
                                         </td>

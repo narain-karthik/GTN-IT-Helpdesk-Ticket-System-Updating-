@@ -23,7 +23,7 @@ class TicketForm(FlaskForm):
         ('Critical', 'Critical')
     ], validators=[DataRequired()])
     system_name = StringField('System Name', render_kw={'placeholder': 'Enter your computer/system name'})
-    image = FileField('Upload Image (Optional)', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Images only!')])
+    image = FileField('Upload File (Optional)', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx'], 'Images, PDF, Word, and Excel files only!')])
     submit = SubmitField('Create Ticket')
 
 class UpdateTicketForm(FlaskForm):

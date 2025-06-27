@@ -212,7 +212,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://gtn_user:gtn_password_2024
 1. Start your Flask application
 2. Check that it connects without errors
 3. Visit the application in your browser
-4. Try creating a test ticket to verify database functionality
+4. Try creating a test ticket with file attachments to verify database functionality
+5. Test uploading different file types (images, PDF, Word, Excel)
 
 ---
 

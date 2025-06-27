@@ -102,6 +102,18 @@ The GTN Engineering IT Helpdesk System is a comprehensive Flask-based web applic
 
 ## Changelog
 
+- June 27, 2025: Added "Assigned By" tracking to monitor who assigns tickets to admins
+- June 27, 2025: Super admins can now add comments directly when editing ticket status
+- June 27, 2025: Enhanced Excel export to include "Assigned By" column for better tracking
+- June 27, 2025: Added assignment history display in ticket details view
+- June 27, 2025: Restricted ticket editing permissions for all users (admins and super admins)
+- June 27, 2025: Admins can now only update ticket status - title, category, priority, and description are read-only after creation
+- June 27, 2025: Enhanced attachment display with file type icons (PDF, Word, Excel, images) and clean filename presentation
+- June 27, 2025: Added attachment indicators in all dashboard views to show which tickets have files
+- June 27, 2025: Successfully completed migration from Replit Agent to Replit environment
+- June 27, 2025: Enhanced file upload system to support PDF, Word (.doc, .docx), and Excel (.xls, .xlsx) files in addition to images
+- June 27, 2025: Fixed ticket creation errors and improved multiple file attachment handling
+- June 27, 2025: Updated all README documentation to reflect new file attachment capabilities
 - June 26, 2025: Successfully migrated from Replit Agent to Replit environment with PostgreSQL database
 - June 26, 2025: Enhanced Super Admin user management with complete CRUD functionality:
   - Added "View User Details" feature showing user info, created tickets, and assigned tickets
