@@ -437,13 +437,17 @@ def edit_ticket(ticket_id):
     """Edit ticket (admin only)"""
     ticket = Ticket.query.get_or_404(ticket_id)
     form = UpdateTicketForm(obj=ticket)
+    current_user = get_current_user()
     
     if form.validate_on_submit():
-        ticket.title = form.title.data
-        ticket.description = form.description.data
-        ticket.category = form.category.data
-        ticket.priority = form.priority.data
+        # Only super admins can edit all fields
+        if current_user and current_user.is_super_admin():
+            ticket.title = form.title.data
+            ticket.description = form.description.data
+            ticket.category = form.category.data
+            ticket.priority = form.priority.data
         
+        # Both admins and super admins can update status
         old_status = ticket.status
         ticket.status = form.status.data
         
@@ -456,7 +460,10 @@ def edit_ticket(ticket_id):
         ticket.updated_at = datetime.utcnow()
         db.session.commit()
         
-        flash('Ticket updated successfully!', 'success')
+        if current_user and current_user.is_super_admin():
+            flash('Ticket updated successfully!', 'success')
+        else:
+            flash('Ticket status updated successfully!', 'success')
         return redirect(url_for('view_ticket', ticket_id=ticket_id))
     
     return render_template('edit_ticket.html', form=form, ticket=ticket)
