@@ -63,7 +63,8 @@ class Ticket(db.Model):
     
     # Image attachment
     image_filename = db.Column(db.String(255), nullable=True)  # Filename of uploaded image
-    
+    attachments = db.relationship('Attachment', backref='ticket', lazy=True)
+
     # Foreign keys
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     assigned_to = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
@@ -97,3 +98,10 @@ class TicketComment(db.Model):
     
     def __repr__(self):
         return f'<Comment {self.id} on Ticket {self.ticket_id}>'
+
+class Attachment(db.Model):
+    __tablename__ = 'attachments'
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('tickets.id'), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)

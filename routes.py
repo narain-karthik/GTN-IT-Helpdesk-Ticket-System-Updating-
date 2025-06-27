@@ -1,6 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash, session, abort, make_response, send_file, send_from_directory
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
+from sqlalchemy import extract, and_
 from app import app, db
 from models import User, Ticket, TicketComment
 from forms import LoginForm, TicketForm, UpdateTicketForm, CommentForm, UserRegistrationForm, AssignTicketForm, UserProfileForm
@@ -12,6 +13,14 @@ import platform
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 import io
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'ppt', 'pptx'}
+UPLOAD_FOLDER = 'uploads/'  # Set a secure uploads folder
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 # Helper function to check if user is logged in
 def is_logged_in():
@@ -171,29 +180,22 @@ def user_profile():
 @app.route('/super-admin-dashboard')
 @admin_required
 def super_admin_dashboard():
-    """Super Admin dashboard with full system overview"""
+    """Super Admin dashboard with full system overview and filters"""
     user = get_current_user()
     if not user.is_super_admin:
         flash('Super Admin access required.', 'error')
         return redirect(url_for('index'))
-    
-    # Get comprehensive statistics
+
+    # Comprehensive statistics (unfiltered)
     total_tickets = Ticket.query.count()
     open_tickets = Ticket.query.filter_by(status='Open').count()
     in_progress_tickets = Ticket.query.filter_by(status='In Progress').count()
     resolved_tickets = Ticket.query.filter_by(status='Resolved').count()
-    
-    # Get user statistics
     total_users = User.query.filter_by(role='user').count()
     total_admins = User.query.filter_by(role='admin').count()
-    
-    # Get recent tickets
-    recent_tickets = Ticket.query.order_by(Ticket.created_at.desc()).limit(10).all()
-    
-    # Get category statistics
     hardware_tickets = Ticket.query.filter_by(category='Hardware').count()
     software_tickets = Ticket.query.filter_by(category='Software').count()
-    
+
     stats = {
         'total_tickets': total_tickets,
         'open_tickets': open_tickets,
@@ -204,8 +206,47 @@ def super_admin_dashboard():
         'hardware_tickets': hardware_tickets,
         'software_tickets': software_tickets
     }
-    
-    return render_template('super_admin_dashboard.html', stats=stats, recent_tickets=recent_tickets)
+
+    # Filter parameters for recent tickets
+    status_filter = request.args.get('status', 'all')
+    priority_filter = request.args.get('priority', 'all')
+    category_filter = request.args.get('category', 'all')
+    search_query = request.args.get('search', '')
+    day_filter = request.args.get('day', '')
+    month_filter = request.args.get('month', '')
+    year_filter = request.args.get('year', '')
+
+    # Build filtered query for recent tickets
+    query = Ticket.query
+    if status_filter != 'all':
+        query = query.filter_by(status=status_filter)
+    if priority_filter != 'all':
+        query = query.filter_by(priority=priority_filter)
+    if category_filter != 'all':
+        query = query.filter_by(category=category_filter)
+    if search_query:
+        query = query.filter(Ticket.title.contains(search_query))
+    if year_filter:
+        query = query.filter(extract('year', Ticket.created_at) == int(year_filter))
+    if month_filter:
+        query = query.filter(extract('month', Ticket.created_at) == int(month_filter))
+    if day_filter:
+        query = query.filter(extract('day', Ticket.created_at) == int(day_filter))
+
+    recent_tickets = query.order_by(Ticket.created_at.desc()).limit(10).all()
+
+    return render_template(
+        'super_admin_dashboard.html',
+        stats=stats,
+        recent_tickets=recent_tickets,
+        status_filter=status_filter,
+        priority_filter=priority_filter,
+        category_filter=category_filter,
+        search_query=search_query,
+        day_filter=day_filter,
+        month_filter=month_filter,
+        year_filter=year_filter
+    )
 
 @app.route('/admin-dashboard')
 @admin_required
@@ -253,31 +294,26 @@ def admin_dashboard():
                          status_filter=status_filter, priority_filter=priority_filter,
                          category_filter=category_filter, search_query=search_query, admin_user=user)
 
+
 @app.route('/create-ticket', methods=['GET', 'POST'])
 @login_required
 def create_ticket():
     """Create a new ticket"""
     form = TicketForm()
     user = get_current_user()
-    
+
     if form.validate_on_submit():
         # Capture current session IP and system info for this specific ticket
-        # Get real client IP address (handles proxy forwarding)
-        current_ip = request.environ.get('HTTP_X_FORWARDED_FOR', 
-                                       request.environ.get('HTTP_X_REAL_IP', 
-                                       request.environ.get('REMOTE_ADDR')))
-        
-        # Get system name - prioritize user input or preserve detected system name
-        current_system_name = None
-        if form.system_name.data and form.system_name.data.strip():
-            # Use the actual system name entered by user or detected by client
-            current_system_name = form.system_name.data.strip()
-        else:
-            # Fallback to current user's system name if available, otherwise use generic detection
+        current_ip = request.environ.get('HTTP_X_FORWARDED_FOR',
+                                         request.environ.get('HTTP_X_REAL_IP',
+                                                             request.environ.get('REMOTE_ADDR')))
+
+        # Get system name
+        current_system_name = form.system_name.data.strip() if form.system_name.data and form.system_name.data.strip() else None
+        if not current_system_name:
             if user.system_name and user.system_name.strip():
                 current_system_name = user.system_name.strip()
             else:
-                # Only use generic detection as last resort
                 user_agent = request.headers.get('User-Agent', '').lower()
                 if 'windows' in user_agent:
                     current_system_name = 'Windows System'
@@ -291,33 +327,37 @@ def create_ticket():
                     current_system_name = 'iOS Device'
                 else:
                     current_system_name = f'Unknown System ({request.remote_addr})'
-        
-        # Update user's profile with latest info (optional)
+
         user.ip_address = current_ip
         user.system_name = current_system_name
-        
-        # Handle image upload
-        image_filename = None
-        if form.image.data and form.image.data.filename:
-            file = form.image.data
-            if file.filename != '':
+
+        # Handle file uploads (supporting multiple attachments)
+        attachment_filenames = []
+        files = request.files.getlist('attachments')
+        for file in files:
+            if file and file.filename and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                if filename:  # Make sure secure_filename didn't return empty string
-                    # Create unique filename with timestamp
-                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
-                    image_filename = timestamp + filename
-                    
-                    # Ensure upload directory exists
-                    upload_dir = 'static/uploads'
-                    os.makedirs(upload_dir, exist_ok=True)
-                    
-                    filepath = os.path.join(upload_dir, image_filename)
-                    try:
-                        file.save(filepath)
-                    except Exception as e:
-                        flash('Error uploading image. Ticket created without image.', 'warning')
-                        image_filename = None
-        
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
+                unique_filename = timestamp + filename
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
+                try:
+                    file.save(filepath)
+                    attachment_filenames.append(unique_filename)
+                except Exception as e:
+                    flash(f'Error uploading file {filename}.', 'warning')
+
+        # For backward compatibility, store the first image filename in image_filename, others in attachments
+        image_filename = None
+        other_attachments = []
+        for fname in attachment_filenames:
+            if any(fname.lower().endswith(ext) for ext in
+                   ['.png', '.jpg', '.jpeg', '.gif', '.bmp']) and not image_filename:
+                image_filename = fname
+            else:
+                other_attachments.append(fname)
+
+        # You may want to store other_attachments as a JSON list or in a separate table
         ticket = Ticket(
             title=form.title.data,
             description=form.description.data,
@@ -327,14 +367,15 @@ def create_ticket():
             user_name=user.full_name,
             user_ip_address=current_ip,
             user_system_name=current_system_name,
-            image_filename=image_filename
+            image_filename=image_filename,
+            attachments=','.join(other_attachments) if other_attachments else None  # Example: comma-separated
         )
         db.session.add(ticket)
         db.session.commit()
-        
+
         flash(f'Ticket {ticket.ticket_number} created successfully!', 'success')
         return redirect(url_for('user_dashboard'))
-    
+
     return render_template('create_ticket.html', form=form)
 
 @app.route('/ticket/<int:ticket_id>')
@@ -789,44 +830,61 @@ def view_image(filename):
 @app.route('/download-excel-report')
 @admin_required
 def download_excel_report():
-    """Download Excel report of all tickets (Super Admin only)"""
+    """Download Excel report of all tickets (Super Admin only) with filtering options"""
     current_user = get_current_user()
     if not current_user.is_super_admin:
         flash('Super Admin access required.', 'error')
         return redirect(url_for('index'))
-    
+
     try:
-        # Create a new workbook and worksheet
+        # --- FILTER PARAMS ---
+        filter_mode = request.args.get('filter_mode', 'range')
+        from_date = request.args.get('from_date')
+        to_date = request.args.get('to_date')
+        month = request.args.get('month')
+        year = request.args.get('year')
+
+        # --- BUILD QUERY BASED ON FILTER ---
+        query = Ticket.query.join(User, Ticket.user_id == User.id)
+
+        if filter_mode == 'range' and from_date and to_date:
+            from_dt = datetime.strptime(from_date, '%Y-%m-%d')
+            to_dt = datetime.strptime(to_date, '%Y-%m-%d')
+            query = query.filter(Ticket.created_at >= from_dt, Ticket.created_at <= to_dt)
+        elif filter_mode == 'month' and month:
+            y, m = map(int, month.split('-'))
+            query = query.filter(
+                extract('year', Ticket.created_at) == y,
+                extract('month', Ticket.created_at) == m
+            )
+        elif filter_mode == 'year' and year:
+            query = query.filter(extract('year', Ticket.created_at) == int(year))
+
+        tickets = query.all()
+
+        # --- EXCEL GENERATION ---
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Tickets Report"
-        
-        # Define headers
         headers = [
             'Ticket ID', 'Title', 'Description', 'Category', 'Priority', 'Status',
             'Created By', 'User Email', 'User Department', 'System Name', 'IP Address',
             'Assigned To', 'Created Date', 'Updated Date', 'Resolved Date'
         ]
-        
-        # Style headers
         header_font = Font(bold=True, color="FFFFFF")
         header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
         header_alignment = Alignment(horizontal="center", vertical="center")
-        
+
         # Add headers to worksheet
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=1, column=col, value=header)
             cell.font = header_font
             cell.fill = header_fill
             cell.alignment = header_alignment
-        
-        # Get all tickets with related data
-        tickets = Ticket.query.join(User, Ticket.user_id == User.id).all()
-        
+
         # Add ticket data
         for row, ticket in enumerate(tickets, 2):
-            assignee_name = ticket.assignee.full_name if ticket.assignee else 'Unassigned'
-            
+            assignee_name = ticket.assignee.full_name if hasattr(ticket, 'assignee') and ticket.assignee else 'Unassigned'
             data = [
                 ticket.ticket_number,
                 ticket.title,
@@ -834,49 +892,48 @@ def download_excel_report():
                 ticket.category,
                 ticket.priority,
                 ticket.status,
-                ticket.user_name,
+                getattr(ticket, 'user_name', ticket.user.full_name if hasattr(ticket.user, 'full_name') else 'N/A'),
                 ticket.user.email,
-                ticket.user.department or 'N/A',
-                ticket.user_system_name or 'N/A',
-                ticket.user_ip_address or 'N/A',
+                getattr(ticket.user, 'department', 'N/A') or 'N/A',
+                getattr(ticket, 'user_system_name', 'N/A') or 'N/A',
+                getattr(ticket, 'user_ip_address', 'N/A') or 'N/A',
                 assignee_name,
                 ticket.created_at.strftime('%Y-%m-%d %H:%M:%S') if ticket.created_at else 'N/A',
                 ticket.updated_at.strftime('%Y-%m-%d %H:%M:%S') if ticket.updated_at else 'N/A',
-                ticket.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if ticket.resolved_at else 'N/A'
+                ticket.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if hasattr(ticket, 'resolved_at') and ticket.resolved_at else 'N/A'
             ]
-            
             for col, value in enumerate(data, 1):
                 ws.cell(row=row, column=col, value=value)
-        
+
         # Auto-adjust column widths
         for column in ws.columns:
             max_length = 0
             column_letter = column[0].column_letter
             for cell in column:
                 try:
-                    if len(str(cell.value)) > max_length:
+                    if cell.value and len(str(cell.value)) > max_length:
                         max_length = len(str(cell.value))
                 except:
                     pass
             adjusted_width = min(max_length + 2, 50)
             ws.column_dimensions[column_letter].width = adjusted_width
-        
+
         # Save to memory
         output = io.BytesIO()
         wb.save(output)
         output.seek(0)
-        
+
         # Generate filename with timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'GTN_Helpdesk_Report_{timestamp}.xlsx'
-        
+
         # Create response
         response = make_response(output.getvalue())
         response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         response.headers['Content-Disposition'] = f'attachment; filename={filename}'
-        
+
         return response
-        
+
     except Exception as e:
         logging.error(f"Error generating Excel report: {e}")
         flash('Error generating report. Please try again.', 'error')

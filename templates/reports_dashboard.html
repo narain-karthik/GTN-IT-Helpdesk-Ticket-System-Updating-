@@ -9,9 +9,10 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="ri-bar-chart-line"></i> Reports Dashboard</h2>
                 <div>
+                    <!-- Full data Download
                     <a href="{{ url_for('download_excel_report') }}" class="btn btn-success">
                         <i class="ri-file-excel-2-line"></i> Download Excel
-                    </a>
+                    </a> -->
                     <button class="btn btn-primary ms-2" onclick="window.print()">
                         <i class="ri-printer-line"></i> Print Report
                     </button>
@@ -22,6 +23,37 @@
             </div>
         </div>
     </div>
+
+    <form id="report-filter-form" method="GET" action="{{ url_for('download_excel_report') }}">
+  <div class="row mb-3">
+    <!-- Filter Mode Selector -->
+    <div class="col-md-3">
+      <select id="filter-mode" name="filter_mode" class="form-select" onchange="updateFilterFields()">
+        <option value="range">Date Range</option>
+        <option value="month">Month</option>
+        <option value="year">Year</option>
+      </select>
+    </div>
+    <!-- Date Range Fields -->
+    <div id="date-range-fields" class="col-md-6">
+      <input type="date" name="from_date" class="form-control d-inline" style="width:48%; display:inline;" placeholder="From Date">
+      <input type="date" name="to_date" class="form-control d-inline" style="width:48%; display:inline;" placeholder="To Date">
+    </div>
+    <!-- Month Field -->
+    <div id="month-field" class="col-md-3" style="display:none;">
+      <input type="month" name="month" class="form-control" placeholder="Select Month">
+    </div>
+    <!-- Year Field -->
+    <div id="year-field" class="col-md-3" style="display:none;">
+      <input type="number" name="year" class="form-control" min="2000" max="2100" placeholder="Select Year">
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-success w-100">
+        <i class="ri-download-2-line"></i> Download Excel
+      </button>
+    </div>
+  </div>
+</form>
 
     <!-- Summary Statistics -->
     <div class="row mb-4">
@@ -100,7 +132,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Priority Breakdown -->
         <div class="col-md-6">
             <div class="card">
@@ -215,7 +247,7 @@
                                     </td>
                                     <td>{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') if ticket.created_at else 'N/A' }}</td>
                                     <td>
-                                        <a href="{{ url_for('view_ticket', ticket_id=ticket.id) }}" 
+                                        <a href="{{ url_for('view_ticket', ticket_id=ticket.id) }}"
                                            class="btn btn-sm btn-outline-primary" title="View Details">
                                             <i class="ri-eye-line"></i>
                                         </a>
@@ -258,10 +290,10 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(categoryCtx, {
             type: 'pie',
             data: {
-                labels: ['Hardware', 'Software', 'Network', 'Other'],
+                labels: ['Hardware', 'Software'],
                 datasets: [{
                     data: categoryData,
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+                    backgroundColor: ['#FF6384', '#36A2EB'],
                     borderWidth: 2
                 }]
             },
@@ -336,33 +368,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const categoryFilter = document.getElementById('categoryFilter');
     const priorityFilter = document.getElementById('priorityFilter');
     const tableRows = document.querySelectorAll('#ticketsTable tbody tr');
-    
+
     function filterTable() {
         const searchTerm = searchInput.value.toLowerCase();
         const statusValue = statusFilter.value;
         const categoryValue = categoryFilter.value;
         const priorityValue = priorityFilter.value;
-        
+
         tableRows.forEach(row => {
             const text = row.textContent.toLowerCase();
             const status = row.cells[4].textContent.trim();
             const category = row.cells[2].textContent.trim();
             const priority = row.cells[3].textContent.trim();
-            
+
             const matchesSearch = text.includes(searchTerm);
             const matchesStatus = !statusValue || status === statusValue;
             const matchesCategory = !categoryValue || category === categoryValue;
             const matchesPriority = !priorityValue || priority === priorityValue;
-            
+
             row.style.display = (matchesSearch && matchesStatus && matchesCategory && matchesPriority) ? '' : 'none';
         });
     }
-    
+
     searchInput.addEventListener('keyup', filterTable);
     statusFilter.addEventListener('change', filterTable);
     categoryFilter.addEventListener('change', filterTable);
     priorityFilter.addEventListener('change', filterTable);
-    
+
     // Add sorting functionality to table headers
     const headers = document.querySelectorAll('#ticketsTable thead th');
     headers.forEach((header, index) => {
@@ -377,25 +409,32 @@ function sortTable(columnIndex) {
     const table = document.getElementById('ticketsTable');
     const tbody = table.querySelector('tbody');
     const rows = Array.from(tbody.querySelectorAll('tr'));
-    
+
     rows.sort((a, b) => {
         const aText = a.cells[columnIndex].textContent.trim();
         const bText = b.cells[columnIndex].textContent.trim();
-        
+
         // Try to parse as numbers first
         const aNum = parseFloat(aText);
         const bNum = parseFloat(bText);
-        
+
         if (!isNaN(aNum) && !isNaN(bNum)) {
             return aNum - bNum;
         }
-        
+
         // Fall back to string comparison
         return aText.localeCompare(bText);
     });
-    
+
     // Re-append sorted rows
     rows.forEach(row => tbody.appendChild(row));
 }
+    function updateFilterFields() {
+  var mode = document.getElementById('filter-mode').value;
+  document.getElementById('date-range-fields').style.display = (mode === 'range') ? 'block' : 'none';
+  document.getElementById('month-field').style.display = (mode === 'month') ? 'block' : 'none';
+  document.getElementById('year-field').style.display = (mode === 'year') ? 'block' : 'none';
+}
+window.onload = updateFilterFields;
 </script>
 {% endblock %}
