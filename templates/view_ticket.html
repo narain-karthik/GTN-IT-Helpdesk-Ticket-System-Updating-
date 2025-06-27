@@ -53,6 +53,22 @@
                         
                         <p><strong>Submitted by:</strong> {{ ticket.user_name }} ({{ ticket.user.department }})</p>
                         
+                        <!-- Assignment Information -->
+                        {% if ticket.assigned_to %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Assigned to:</strong> {{ ticket.assignee.full_name }} ({{ ticket.assignee.department }})</p>
+                                </div>
+                                <div class="col-md-6">
+                                    {% if ticket.assigner %}
+                                        <p><strong>Assigned by:</strong> {{ ticket.assigner.full_name }}</p>
+                                    {% elif ticket.assigned_by %}
+                                        <p><strong>Assigned by:</strong> System Admin</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
                         <!-- User System Information -->
                         <div class="row">
                             <div class="col-md-6">

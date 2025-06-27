@@ -102,6 +102,10 @@ The GTN Engineering IT Helpdesk System is a comprehensive Flask-based web applic
 
 ## Changelog
 
+- June 27, 2025: Added "Assigned By" tracking to monitor who assigns tickets to admins
+- June 27, 2025: Super admins can now add comments directly when editing ticket status
+- June 27, 2025: Enhanced Excel export to include "Assigned By" column for better tracking
+- June 27, 2025: Added assignment history display in ticket details view
 - June 27, 2025: Restricted ticket editing permissions for all users (admins and super admins)
 - June 27, 2025: Admins can now only update ticket status - title, category, priority, and description are read-only after creation
 - June 27, 2025: Enhanced attachment display with file type icons (PDF, Word, Excel, images) and clean filename presentation

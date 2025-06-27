@@ -451,6 +451,25 @@ def edit_ticket(ticket_id):
             ticket.resolved_at = None
         
         ticket.updated_at = datetime.utcnow()
+        
+        # Add comment if super admin provided one
+        admin_comment = request.form.get('admin_comment', '').strip()
+        if current_user and current_user.is_super_admin() and admin_comment:
+            comment = TicketComment(
+                ticket_id=ticket.id,
+                user_id=current_user.id,
+                comment=f"Status updated to '{ticket.status}'. {admin_comment}"
+            )
+            db.session.add(comment)
+        elif old_status != ticket.status:
+            # Add automatic status change comment
+            comment = TicketComment(
+                ticket_id=ticket.id,
+                user_id=current_user.id,
+                comment=f"Status updated from '{old_status}' to '{ticket.status}'"
+            )
+            db.session.add(comment)
+        
         db.session.commit()
         
         flash('Ticket status updated successfully!', 'success')
@@ -466,7 +485,9 @@ def assign_ticket(ticket_id):
     form = AssignTicketForm()
     
     if form.validate_on_submit():
+        current_user = get_current_user()
         ticket.assigned_to = form.assigned_to.data
+        ticket.assigned_by = current_user.id if current_user else None
         if ticket.status == 'Open':
             ticket.status = 'In Progress'
         ticket.updated_at = datetime.utcnow()
@@ -644,6 +665,7 @@ def assign_work(ticket_id):
     
     if form.validate_on_submit():
         ticket.assigned_to = form.assigned_to.data
+        ticket.assigned_by = user.id
         ticket.status = 'In Progress'
         ticket.updated_at = datetime.utcnow()
         db.session.commit()
@@ -909,7 +931,7 @@ def download_excel_report():
         headers = [
             'Ticket ID', 'Title', 'Description', 'Category', 'Priority', 'Status',
             'Created By', 'User Email', 'User Department', 'System Name', 'IP Address',
-            'Assigned To', 'Created Date', 'Updated Date', 'Resolved Date'
+            'Assigned To', 'Assigned By', 'Created Date', 'Updated Date', 'Resolved Date'
         ]
         header_font = Font(bold=True, color="FFFFFF")
         header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
@@ -925,6 +947,7 @@ def download_excel_report():
         # Add ticket data
         for row, ticket in enumerate(tickets, 2):
             assignee_name = ticket.assignee.full_name if hasattr(ticket, 'assignee') and ticket.assignee else 'Unassigned'
+            assigner_name = ticket.assigner.full_name if hasattr(ticket, 'assigner') and ticket.assigner else 'N/A'
             data = [
                 ticket.ticket_number,
                 ticket.title,
@@ -938,6 +961,7 @@ def download_excel_report():
                 getattr(ticket, 'user_system_name', 'N/A') or 'N/A',
                 getattr(ticket, 'user_ip_address', 'N/A') or 'N/A',
                 assignee_name,
+                assigner_name,
                 ticket.created_at.strftime('%Y-%m-%d %H:%M:%S') if ticket.created_at else 'N/A',
                 ticket.updated_at.strftime('%Y-%m-%d %H:%M:%S') if ticket.updated_at else 'N/A',
                 ticket.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if hasattr(ticket, 'resolved_at') and ticket.resolved_at else 'N/A'

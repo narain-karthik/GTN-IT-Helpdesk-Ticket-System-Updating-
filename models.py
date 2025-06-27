@@ -22,6 +22,7 @@ class User(db.Model):
     # Relationship with tickets
     tickets = db.relationship('Ticket', backref='user', lazy=True, foreign_keys='Ticket.user_id')
     assigned_tickets = db.relationship('Ticket', backref='assignee', lazy=True, foreign_keys='Ticket.assigned_to')
+    assignments_made = db.relationship('Ticket', backref='assigner', lazy=True, foreign_keys='Ticket.assigned_by')
     
     def set_password(self, password):
         """Set password hash"""
@@ -68,6 +69,7 @@ class Ticket(db.Model):
     # Foreign keys
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     assigned_to = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    assigned_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
