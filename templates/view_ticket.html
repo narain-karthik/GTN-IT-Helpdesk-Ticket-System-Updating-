@@ -237,34 +237,41 @@
                         <h6><i class="ri-history-line"></i> Ticket History</h6>
                     </div>
                     <div class="card-body">
-                        <div class="timeline">
-                            <div class="timeline-item">
-                                <i class="ri-add-line"></i>
-                                <div>
-                                    <strong>Ticket Created</strong>
-                                    <br><small>{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                                </div>
-                            </div>
-                            
+                        <div class="mb-3">
+                            <strong>Created By:</strong><br>
+                            <span class="text-primary">{{ ticket.user_name }}</span>
+                            <br><small class="text-muted">{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Assigned By:</strong><br>
+                            {% if ticket.assigner %}
+                                <span class="text-info">{{ ticket.assigner.full_name }}</span>
+                            {% else %}
+                                <span class="text-muted">Not assigned</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Assigned To:</strong><br>
                             {% if ticket.assignee %}
-                                <div class="timeline-item">
-                                    <i class="ri-user-add-line"></i>
-                                    <div>
-                                        <strong>Assigned to {{ ticket.assignee.full_name }}</strong>
-                                        <br><small>{{ ticket.updated_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                                    </div>
-                                </div>
+                                <span class="text-success">{{ ticket.assignee.full_name }}</span>
+                            {% else %}
+                                <span class="text-muted">Not assigned</span>
                             {% endif %}
-                            
-                            {% if ticket.resolved_at %}
-                                <div class="timeline-item">
-                                    <i class="ri-check-line"></i>
-                                    <div>
-                                        <strong>Ticket Resolved</strong>
-                                        <br><small>{{ ticket.resolved_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                                    </div>
-                                </div>
-                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-0">
+                            <strong>Status:</strong><br>
+                            {% set status_class = {
+                                'Open': 'primary',
+                                'In Progress': 'info',
+                                'Resolved': 'success',
+                                'Closed': 'secondary'
+                            } %}
+                            <span class="badge bg-{{ status_class[ticket.status] }}">
+                                {{ ticket.status }}
+                            </span>
                         </div>
                     </div>
                 </div>
