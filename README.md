@@ -12,7 +12,7 @@ A comprehensive Flask-based IT helpdesk management system designed for professio
 ### 🎯 Core Functionality
 - **Role-Based Access Control**: Three user levels (Super Admin, Admin, User)
 - **Ticket Management**: Complete lifecycle from creation to resolution
-- **Image Upload Support**: Secure file attachment system for tickets
+- **File Upload Support**: Secure attachment system supporting images, PDF, Word, and Excel files
 - **System Detection**: Automatic IP address and system name capture
 - **Real-time Updates**: Live ticket status tracking and notifications
 - **Comment System**: Collaborative ticket discussion and updates
@@ -214,10 +214,11 @@ app.config.update({
 3. **Fill out the form**:
    - Title: Descriptive summary
    - Description: Detailed problem description
-   - Category: Hardware/Software/Network/Other
+   - Category: Hardware/Software
    - Priority: Low/Medium/High/Critical
    - System Name: Auto-detected or manual entry
-4. **Submit** - Ticket number will be generated automatically
+   - File Attachments: Upload images, PDF, Word documents, or Excel files
+5. **Submit** - Ticket number will be generated automatically
 
 ### Admin Workflow
 
@@ -309,6 +310,14 @@ The application automatically captures:
 - **Workload Balancing**: Distributes tickets evenly among admins
 - **Priority Handling**: Escalates critical issues automatically
 - **Department Matching**: Assigns based on user department
+
+### File Attachment System
+
+- **Multiple File Types**: Support for images (JPG, PNG, GIF, BMP), PDF documents, Word files (.doc, .docx), and Excel spreadsheets (.xls, .xlsx)
+- **Multiple Files**: Upload multiple attachments per ticket
+- **Secure Storage**: Files stored with unique timestamps to prevent conflicts
+- **Admin Access**: Only administrators can view and download attachments for security
+- **File Validation**: Automatic file type validation and size limits
 
 ### Reporting & Analytics
 

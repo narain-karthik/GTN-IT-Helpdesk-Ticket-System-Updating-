@@ -129,6 +129,36 @@ CREATE INDEX idx_ticket_comments_user_id ON ticket_comments(user_id);
 CREATE INDEX idx_ticket_comments_created_at ON ticket_comments(created_at);
 ```
 
+### 4. Attachments Table (`attachments`)
+
+Stores file attachments associated with tickets, supporting multiple file types.
+
+```sql
+CREATE TABLE attachments (
+    id SERIAL PRIMARY KEY,
+    ticket_id INTEGER NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+    filename VARCHAR(255) NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Columns Description:
+- **id**: Primary key, auto-incrementing integer
+- **ticket_id**: Foreign key to tickets table
+- **filename**: Original filename with timestamp prefix for uniqueness
+- **uploaded_at**: File upload timestamp
+
+#### Supported File Types:
+- **Images**: JPG, JPEG, PNG, GIF, BMP
+- **Documents**: PDF files
+- **Office Files**: Word (.doc, .docx), Excel (.xls, .xlsx)
+
+#### Indexes:
+```sql
+CREATE INDEX idx_attachments_ticket_id ON attachments(ticket_id);
+CREATE INDEX idx_attachments_uploaded_at ON attachments(uploaded_at);
+```
+
 ## Relationships
 
 ### Foreign Key Relationships:
@@ -149,6 +179,11 @@ CREATE INDEX idx_ticket_comments_created_at ON ticket_comments(created_at);
 4. **ticket_comments.user_id → users.id**
    - Each comment belongs to one user (author)
    - One user can author multiple comments
+
+5. **attachments.ticket_id → tickets.id**
+   - Each attachment belongs to one ticket
+   - One ticket can have multiple attachments
+   - CASCADE DELETE: Attachments are deleted when ticket is deleted
 
 ## Database Setup Commands
 
