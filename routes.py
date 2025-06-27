@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 from sqlalchemy import extract, and_
 from app import app, db
-from models import User, Ticket, TicketComment
+from models import User, Ticket, TicketComment, Attachment
 from forms import LoginForm, TicketForm, UpdateTicketForm, CommentForm, UserRegistrationForm, AssignTicketForm, UserProfileForm
 from datetime import datetime
 import logging
@@ -357,7 +357,7 @@ def create_ticket():
             else:
                 other_attachments.append(fname)
 
-        # You may want to store other_attachments as a JSON list or in a separate table
+        # Create the ticket first
         ticket = Ticket(
             title=form.title.data,
             description=form.description.data,
@@ -367,11 +367,21 @@ def create_ticket():
             user_name=user.full_name,
             user_ip_address=current_ip,
             user_system_name=current_system_name,
-            image_filename=image_filename,
-            attachments=','.join(other_attachments) if other_attachments else None  # Example: comma-separated
+            image_filename=image_filename
         )
         db.session.add(ticket)
         db.session.commit()
+
+        # Create attachment records for non-image files
+        for attachment_filename in other_attachments:
+            attachment = Attachment(
+                ticket_id=ticket.id,
+                filename=attachment_filename
+            )
+            db.session.add(attachment)
+        
+        if other_attachments:
+            db.session.commit()
 
         flash(f'Ticket {ticket.ticket_number} created successfully!', 'success')
         return redirect(url_for('user_dashboard'))
