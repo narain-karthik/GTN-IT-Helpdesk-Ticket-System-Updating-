@@ -476,7 +476,7 @@ def edit_ticket(ticket_id):
         flash('Ticket status updated successfully!', 'success')
         return redirect(url_for('view_ticket', ticket_id=ticket_id))
     
-    return render_template('edit_ticket.html', form=form, ticket=ticket)
+    return render_template('edit_ticket.html', form=form, ticket=ticket, user=current_user)
 
 @app.route('/ticket/<int:ticket_id>/assign', methods=['POST'])
 @admin_required
