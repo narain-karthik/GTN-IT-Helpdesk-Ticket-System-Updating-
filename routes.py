@@ -829,11 +829,44 @@ def edit_assignment(ticket_id):
     return render_template('edit_assignment.html', ticket=ticket, admin_users=admin_users)
 
 @app.route('/view-image/<filename>')
-@admin_required
+@login_required
 def view_image(filename):
-    """View uploaded ticket image (Admin and Super Admin only)"""
+    """View uploaded ticket image - admins can view any, users can view their own"""
+    current_user = get_current_user()
+    
+    # Find ticket with this image
+    ticket = Ticket.query.filter_by(image_filename=filename).first()
+    if not ticket:
+        abort(404)
+    
+    # Check permissions - admins can view any, users only their own tickets
+    if not current_user.is_admin and ticket.user_id != current_user.id:
+        abort(403)
+    
     try:
-        return send_from_directory('static/uploads', filename)
+        return send_from_directory('uploads', filename)
+    except FileNotFoundError:
+        abort(404)
+
+@app.route('/download-attachment/<filename>')
+@login_required
+def download_attachment(filename):
+    """Download file attachment - admins can download any, users can download their own"""
+    current_user = get_current_user()
+    
+    # Find the attachment record
+    attachment = Attachment.query.filter_by(filename=filename).first()
+    if not attachment:
+        abort(404)
+    
+    # Check permissions - admins can download any, users only their own tickets
+    if not current_user.is_admin:
+        ticket = Ticket.query.get(attachment.ticket_id)
+        if not ticket or ticket.user_id != current_user.id:
+            abort(403)
+    
+    try:
+        return send_from_directory('uploads', filename, as_attachment=True)
     except FileNotFoundError:
         abort(404)
 
