@@ -1,5 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash, session, abort, make_response, send_file, send_from_directory
 from werkzeug.security import generate_password_hash
+from flask_login import current_user
 from werkzeug.utils import secure_filename
 from sqlalchemy import extract, and_
 from app import app, db
