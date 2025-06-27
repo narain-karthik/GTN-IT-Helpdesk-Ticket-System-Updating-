@@ -455,7 +455,7 @@ def edit_ticket(ticket_id):
         
         # Add comment if super admin provided one
         admin_comment = request.form.get('admin_comment', '').strip()
-        if current_user and current_user.is_super_admin() and admin_comment:
+        if current_user and current_user.is_super_admin and admin_comment:
             comment = TicketComment(
                 ticket_id=ticket.id,
                 user_id=current_user.id,
