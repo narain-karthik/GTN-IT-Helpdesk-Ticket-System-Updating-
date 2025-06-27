@@ -440,14 +440,7 @@ def edit_ticket(ticket_id):
     current_user = get_current_user()
     
     if form.validate_on_submit():
-        # Only super admins can edit all fields
-        if current_user and current_user.is_super_admin():
-            ticket.title = form.title.data
-            ticket.description = form.description.data
-            ticket.category = form.category.data
-            ticket.priority = form.priority.data
-        
-        # Both admins and super admins can update status
+        # Only status can be updated - no one can edit title, description, category, or priority
         old_status = ticket.status
         ticket.status = form.status.data
         
@@ -460,10 +453,7 @@ def edit_ticket(ticket_id):
         ticket.updated_at = datetime.utcnow()
         db.session.commit()
         
-        if current_user and current_user.is_super_admin():
-            flash('Ticket updated successfully!', 'success')
-        else:
-            flash('Ticket status updated successfully!', 'success')
+        flash('Ticket status updated successfully!', 'success')
         return redirect(url_for('view_ticket', ticket_id=ticket_id))
     
     return render_template('edit_ticket.html', form=form, ticket=ticket)
