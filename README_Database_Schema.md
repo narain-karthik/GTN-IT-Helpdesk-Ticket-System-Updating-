@@ -72,6 +72,8 @@ CREATE TABLE tickets (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP
 );
+
+ALTER TABLE tickets ADD COLUMN assigned_by INTEGER REFERENCES users(id);
 ```
 
 #### Columns Description:
