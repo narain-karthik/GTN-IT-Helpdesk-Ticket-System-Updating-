@@ -47,7 +47,7 @@
                                         {{ ticket.status }}
                                     </span>
                                 </p>
-                                <p><strong>Created:</strong> {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                               <p><strong>Created:</strong> {{ ticket.created_at|to_ist }}</p>
                             </div>
                         </div>
                         
@@ -86,7 +86,7 @@
                         {% endif %}
                         
                         {% if ticket.resolved_at %}
-                            <p><strong>Resolved:</strong> {{ ticket.resolved_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                            <p><strong>Resolved:</strong> {{ ticket.resolved_at|to_ist }}</p>
                         {% endif %}
                         
                         <hr>
@@ -139,8 +139,8 @@
                                                     <span class="badge bg-secondary ms-2">{{ file_ext.upper() }}</span>
                                                     <br>
                                                     <small class="text-muted">
-                                                        Uploaded: {{ attachment.uploaded_at.strftime('%Y-%m-%d %H:%M') }}
-                                                    </small>
+    Uploaded: {{ attachment.uploaded_at|to_ist }}
+</small>
                                                 </div>
                                                 <div>
                                                     <a href="{{ url_for('download_attachment', filename=attachment.filename) }}" 
@@ -165,13 +165,13 @@
                     <div class="card-body">
                         {% if ticket.comments %}
                             {% for comment in ticket.comments %}
-                                <div class="mb-3 border-bottom pb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <strong>{{ comment.user.full_name }}</strong>
-                                        <small class="text-muted">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                                    </div>
-                                    <p class="mb-0 mt-1">{{ comment.comment | nl2br }}</p>
-                                </div>
+                               <div class="mb-3 border-bottom pb-3">
+    <div class="d-flex justify-content-between">
+        <strong>{{ comment.user.full_name }}</strong>
+        <small class="text-muted">{{ comment.created_at|to_ist }}</small>
+    </div>
+    <p class="mb-0 mt-1">{{ comment.comment | nl2br }}</p>
+</div>
                             {% endfor %}
                         {% else %}
                             <p class="text-muted">No comments yet.</p>
@@ -232,49 +232,51 @@
                 </div>
                 
                 <!-- Ticket History -->
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h6><i class="ri-history-line"></i> Ticket History</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <strong>Created By:</strong><br>
-                            <span class="text-primary">{{ ticket.user_name }}</span>
-                            <br><small class="text-muted">{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <strong>Assigned By:</strong><br>
-                            {% if ticket.assigner %}
-                                <span class="text-info">{{ ticket.assigner.full_name }}</span>
-                            {% else %}
-                                <span class="text-muted">Not assigned</span>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <strong>Assigned To:</strong><br>
-                            {% if ticket.assignee %}
-                                <span class="text-success">{{ ticket.assignee.full_name }}</span>
-                            {% else %}
-                                <span class="text-muted">Not assigned</span>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-0">
-                            <strong>Status:</strong><br>
-                            {% set status_class = {
-                                'Open': 'primary',
-                                'In Progress': 'info',
-                                'Resolved': 'success',
-                                'Closed': 'secondary'
-                            } %}
-                            <span class="badge bg-{{ status_class[ticket.status] }}">
-                                {{ ticket.status }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+
+<div class="card mt-3">
+  <div class="card-header">
+    <h6><i class="ri-history-line"></i> Ticket History</h6>
+  </div>
+  <div class="card-body">
+    <div>
+      <strong>Created By:</strong> {{ ticket.user_name }}<br>
+      <small class="text-muted">{{ ticket.created_at|to_ist }}</small>
+    </div>
+
+    <div>
+      <strong>Assigned By:</strong>
+      {% if ticket.assigner %}
+        {{ ticket.assigner.full_name }}
+        {% if ticket.assigned_at %}
+          <br><small class="text-muted">Assigned at: {{ ticket.assigned_at|to_ist }}</small>
+        {% endif %}
+      {% else %}
+        <span class="text-muted">Not assigned</span>
+      {% endif %}
+    </div>
+
+    <div>
+      <strong>Assigned To:</strong>
+      {% if ticket.assignee %}
+        {{ ticket.assignee.full_name }}
+      {% else %}
+        <span class="text-muted">Not assigned</span>
+        {% if ticket.unassigned_at %}
+          <br><small class="text-muted">Unassigned at: {{ ticket.unassigned_at|to_ist }}</small>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <div>
+      <strong>Status:</strong>
+      <span class="badge bg-{{ status_class[ticket.status] }}">{{ ticket.status }}</span>
+      {% if ticket.updated_at %}
+        <br><small class="text-muted">Last Status Update: {{ ticket.updated_at|to_ist }}</small>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
             </div>
         </div>
     </div>

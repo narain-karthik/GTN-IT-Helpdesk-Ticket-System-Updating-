@@ -7,6 +7,7 @@ from app import app, db
 from models import User, Ticket, TicketComment, Attachment
 from forms import LoginForm, TicketForm, UpdateTicketForm, CommentForm, UserRegistrationForm, AssignTicketForm, UserProfileForm
 from datetime import datetime
+from utils.email import send_assignment_email  # Add this import
 import logging
 import os
 import socket
@@ -38,7 +39,7 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if not is_logged_in():
             flash('Please log in to access this page.', 'warning')
-            return redirect(url_for('user_login'))
+            return redirect(url_for('common_login'))
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function
@@ -48,7 +49,7 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         if not is_logged_in():
             flash('Please log in to access this page.', 'warning')
-            return redirect(url_for('admin_login'))
+            return redirect(url_for('common_login'))
         user = get_current_user()
         if not user or not user.is_admin:
             flash('Admin access required.', 'error')
@@ -62,18 +63,26 @@ def index():
     """Home page"""
     return render_template('index.html')
 
-@app.route('/user-login', methods=['GET', 'POST'])
-def user_login():
-    """User login page"""
+@app.route('/login', methods=['GET', 'POST'])
+def common_login():
+    """Common login page for all user types"""
     if is_logged_in():
-        return redirect(url_for('user_dashboard'))
+        user = get_current_user()
+        # Redirect to appropriate dashboard based on role
+        if user.is_super_admin:
+            return redirect(url_for('super_admin_dashboard'))
+        elif user.is_admin:
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return redirect(url_for('user_dashboard'))
     
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user and user.check_password(form.password.data) and user.role == 'user':
+        if user and user.check_password(form.password.data):
+            # Set session variables
             session['user_id'] = user.id
-            session['is_admin'] = False
+            session['is_admin'] = user.is_admin
             session['role'] = user.role
             
             # Update IP address and system info
@@ -85,39 +94,28 @@ def user_login():
             db.session.commit()
             
             flash(f'Welcome back, {user.first_name}!', 'success')
-            return redirect(url_for('user_dashboard'))
+            
+            # Route to appropriate dashboard based on role
+            if user.is_super_admin:
+                return redirect(url_for('super_admin_dashboard'))
+            elif user.is_admin:
+                return redirect(url_for('admin_dashboard'))
+            else:
+                return redirect(url_for('user_dashboard'))
         else:
             flash('Invalid username or password.', 'error')
     
-    return render_template('user_login.html', form=form)
+    return render_template('common_login.html', form=form)
+
+@app.route('/user-login', methods=['GET', 'POST'])
+def user_login():
+    """User login page - redirects to common login"""
+    return redirect(url_for('common_login'))
 
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
-    """Admin login page"""
-    if is_logged_in() and get_current_user().is_admin:
-        user = get_current_user()
-        if user.is_super_admin:
-            return redirect(url_for('super_admin_dashboard'))
-        else:
-            return redirect(url_for('admin_dashboard'))
-    
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user and user.check_password(form.password.data) and user.is_admin:
-            session['user_id'] = user.id
-            session['is_admin'] = True
-            session['role'] = user.role
-            flash(f'Welcome back, {user.first_name}!', 'success')
-            
-            if user.is_super_admin:
-                return redirect(url_for('super_admin_dashboard'))
-            else:
-                return redirect(url_for('admin_dashboard'))
-        else:
-            flash('Invalid admin credentials.', 'error')
-    
-    return render_template('admin_login.html', form=form)
+    """Admin login page - redirects to common login"""
+    return redirect(url_for('common_login'))
 
 @app.route('/logout')
 def logout():
@@ -478,13 +476,14 @@ def edit_ticket(ticket_id):
     
     return render_template('edit_ticket.html', form=form, ticket=ticket, user=current_user)
 
+
 @app.route('/ticket/<int:ticket_id>/assign', methods=['POST'])
 @admin_required
 def assign_ticket(ticket_id):
     """Assign ticket to admin"""
     ticket = Ticket.query.get_or_404(ticket_id)
     form = AssignTicketForm()
-    
+
     if form.validate_on_submit():
         current_user = get_current_user()
         ticket.assigned_to = form.assigned_to.data
@@ -492,12 +491,58 @@ def assign_ticket(ticket_id):
         if ticket.status == 'Open':
             ticket.status = 'In Progress'
         ticket.updated_at = datetime.utcnow()
+        ticket.assigned_at = datetime.utcnow()
         db.session.commit()
-        
+
         assignee = User.query.get(form.assigned_to.data)
+
+        # Send email notification
+        if assignee and assignee.email:
+            send_assignment_email(assignee.email, ticket.id, assignee.full_name)
+
         flash(f'Ticket assigned to {assignee.full_name}!', 'success')
-    
+
     return redirect(url_for('view_ticket', ticket_id=ticket_id))
+
+
+@app.route('/edit-user/<int:user_id>', methods=['GET', 'POST'])
+@admin_required
+def edit_user(user_id):
+    """Edit user (Super Admin only)"""
+    current_user = get_current_user()
+    if not current_user.is_super_admin:
+        flash('Super Admin access required.', 'error')
+        return redirect(url_for('index'))
+
+    user = User.query.get_or_404(user_id)
+    form = UserProfileForm()
+
+    if form.validate_on_submit():
+        user.username = form.username.data
+        user.role = form.role.data
+        user.first_name = form.first_name.data
+        user.last_name = form.last_name.data
+        user.email = form.email.data
+        user.department = form.department.data
+        user.system_name = form.system_name.data
+        # Only update password if a new value is provided
+        if form.password.data:
+            user.password = generate_password_hash(form.password.data)
+        db.session.commit()
+        flash(f'User {user.username} updated successfully!', 'success')
+        return redirect(url_for('view_user', user_id=user_id))
+
+    # Pre-populate the form
+    form.username.data = user.username
+    form.role.data = user.role
+    form.first_name.data = user.first_name
+    form.last_name.data = user.last_name
+    form.email.data = user.email
+    form.department.data = user.department
+    form.system_name.data = user.system_name
+    # Do not pre-fill password for security reasons
+
+    return render_template('edit_user.html', form=form, user=user)
 
 @app.route('/manage-users')
 @admin_required
@@ -556,37 +601,7 @@ def view_user(user_id):
     
     return render_template('view_user.html', user=user, user_tickets=user_tickets, assigned_tickets=assigned_tickets)
 
-@app.route('/edit-user/<int:user_id>', methods=['GET', 'POST'])
-@admin_required
-def edit_user(user_id):
-    """Edit user (Super Admin only)"""
-    current_user = get_current_user()
-    if not current_user.is_super_admin:
-        flash('Super Admin access required.', 'error')
-        return redirect(url_for('index'))
-    
-    user = User.query.get_or_404(user_id)
-    form = UserProfileForm()
-    
-    if form.validate_on_submit():
-        user.first_name = form.first_name.data
-        user.last_name = form.last_name.data
-        user.email = form.email.data
-        user.department = form.department.data
-        user.system_name = form.system_name.data
-        
-        db.session.commit()
-        flash(f'User {user.username} updated successfully!', 'success')
-        return redirect(url_for('view_user', user_id=user_id))
-    
-    # Pre-populate the form
-    form.first_name.data = user.first_name
-    form.last_name.data = user.last_name
-    form.email.data = user.email
-    form.department.data = user.department
-    form.system_name.data = user.system_name
-    
-    return render_template('edit_user.html', form=form, user=user)
+
 
 @app.route('/delete-user/<int:user_id>', methods=['POST'])
 @admin_required

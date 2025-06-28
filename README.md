@@ -15,6 +15,7 @@ A comprehensive Flask-based IT helpdesk management system designed for professio
 - **Ticket Management**: Complete lifecycle from creation to resolution
 - **Enhanced Ticket History**: New streamlined format showing Created By, Assigned By, Assigned To, and Status with colored badges
 - **File Upload Support**: Secure attachment system supporting images, PDF, Word, and Excel files
+- **Email Notifications**: SMTP integration for automatic ticket assignment notifications
 - **System Detection**: Automatic IP address and system name capture
 - **Real-time Updates**: Live ticket status tracking and notifications
 - **Comment System**: Collaborative ticket discussion and updates
@@ -243,47 +244,58 @@ app.config.update({
 ```python
 class User(db.Model):
     id = Integer (Primary Key)
-    username = String(80) (Unique)
-    email = String(120) (Unique)
-    password_hash = String(256)
-    first_name = String(50)
-    last_name = String(50)
-    department = String(100)
-    role = String(20)  # user, admin, super_admin
-    is_admin = Boolean
-    ip_address = String(45)
-    system_name = String(100)
-    created_at = DateTime
+    username = String(80) (Unique, NOT NULL)
+    email = String(120) (Unique, NOT NULL)
+    password_hash = String(256) (NOT NULL)
+    first_name = String(50) (NOT NULL)
+    last_name = String(50) (NOT NULL)
+    department = String(100) (Optional)
+    role = String(50) (NOT NULL, Default: 'User')  # user, admin, super_admin
+    is_admin = Boolean (Default: False)
+    ip_address = String(45) (Optional, IPv4/IPv6)
+    system_name = String(100) (Optional)
+    profile_image = String(200) (Optional)
+    created_at = DateTime (Default: UTC now)
 ```
 
 #### Ticket Model
 ```python
 class Ticket(db.Model):
     id = Integer (Primary Key)
-    title = String(200)
-    description = Text
-    category = String(50)  # Hardware, Software (Network and Other removed)
-    priority = String(20)  # Low, Medium, High, Critical
-    status = String(20)    # Open, In Progress, Resolved, Closed
-    user_id = Integer (Foreign Key)
-    assigned_to = Integer (Foreign Key)
-    user_name = String(100)  # Full name of ticket creator
-    user_ip_address = String(45)  # IP address at ticket creation
-    user_system_name = String(100)  # System name at ticket creation
-    image_filename = String(255)  # Uploaded image filename (NEW)
-    created_at = DateTime
-    updated_at = DateTime
-    resolved_at = DateTime
+    title = String(200) (NOT NULL)
+    description = Text (NOT NULL)
+    category = String(50) (NOT NULL)  # Hardware, Software
+    priority = String(20) (NOT NULL)  # Low, Medium, High, Critical
+    status = String(20) (NOT NULL, Default: 'Open')  # Open, In Progress, Resolved, Closed
+    user_name = String(100) (NOT NULL)  # Full name of ticket creator
+    user_ip_address = String(45) (Optional)  # IP at creation
+    user_system_name = String(100) (Optional)  # System name at creation
+    image_filename = String(255) (Optional)  # Uploaded file
+    user_id = Integer (Foreign Key, NOT NULL → users.id)
+    assigned_to = Integer (Foreign Key, Optional → users.id)
+    assigned_by = Integer (Foreign Key, Optional → users.id)
+    created_at = DateTime (Default: UTC now)
+    updated_at = DateTime (Auto-update on changes)
+    resolved_at = DateTime (Optional, set when resolved)
 ```
 
 #### Comment Model
 ```python
 class TicketComment(db.Model):
     id = Integer (Primary Key)
-    ticket_id = Integer (Foreign Key)
-    user_id = Integer (Foreign Key)
-    comment = Text
-    created_at = DateTime
+    ticket_id = Integer (Foreign Key, NOT NULL → tickets.id)
+    user_id = Integer (Foreign Key, NOT NULL → users.id)
+    comment = Text (NOT NULL)
+    created_at = DateTime (Default: UTC now)
+```
+
+#### Attachment Model
+```python
+class Attachment(db.Model):
+    id = Integer (Primary Key)
+    ticket_id = Integer (Foreign Key, NOT NULL → tickets.id)
+    filename = String(255) (NOT NULL)
+    uploaded_at = DateTime (Default: UTC now)
 ```
 
 ### Key Routes

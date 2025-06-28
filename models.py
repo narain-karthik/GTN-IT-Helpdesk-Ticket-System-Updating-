@@ -12,7 +12,7 @@ class User(db.Model):
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     department = db.Column(db.String(100), nullable=True)
-    role = db.Column(db.String(20), default='user')  # user, admin, super_admin
+    role = db.Column(db.String(50), nullable=False, default='User')  # user, admin, super_admin
     is_admin = db.Column(db.Boolean, default=False)
     ip_address = db.Column(db.String(45), nullable=True)  # IPv4/IPv6
     system_name = db.Column(db.String(100), nullable=True)
@@ -66,6 +66,8 @@ class Ticket(db.Model):
     image_filename = db.Column(db.String(255), nullable=True)  # Filename of uploaded image
     attachments = db.relationship('Attachment', backref='ticket', lazy=True)
 
+   # assigned_at = db.Column(db.DateTime)  # Add this line if not present
+
     # Foreign keys
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     assigned_to = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
@@ -107,3 +109,4 @@ class Attachment(db.Model):
     ticket_id = db.Column(db.Integer, db.ForeignKey('tickets.id'), nullable=False)
     filename = db.Column(db.String(255), nullable=False)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+

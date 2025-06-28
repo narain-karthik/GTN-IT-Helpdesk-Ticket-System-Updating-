@@ -42,6 +42,15 @@ PGPASSWORD=...                 # Auto-configured
 SESSION_SECRET=...             # Auto-generated
 ```
 
+**Optional Email Notification Setup:**
+For automatic email notifications when tickets are assigned, configure these additional environment variables:
+```bash
+SMTP_USERNAME=your_email@gmail.com     # Your email address
+SMTP_PASSWORD=your_app_password        # Gmail app password (not regular password)
+SMTP_SERVER=smtp.gmail.com             # Optional (defaults to Gmail)
+SMTP_PORT=587                          # Optional (defaults to 587)
+```
+
 No manual database setup required!
 
 ---
@@ -177,6 +186,8 @@ CREATE TABLE tickets (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP
 );
+
+ALTER TABLE tickets ADD COLUMN assigned_by INTEGER REFERENCES users(id);
 ```
 
 #### Ticket Comments Table
@@ -188,6 +199,10 @@ CREATE TABLE ticket_comments (
     comment TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+UPDATE users SET role = 'user' WHERE role = 'User';
+UPDATE users SET role = 'admin' WHERE role = 'Admin';
+UPDATE users SET role = 'super_admin' WHERE role = 'Superadmin';
 ```
 
 ### Step 4.2: New Features (Updated Schema)
@@ -390,6 +405,15 @@ If you encounter issues not covered in this guide:
 
 ## 6. Recent Updates
 
+### June 28, 2025 - User Role & Email Notification Fixes
+- **User Role Fix**: Resolved bug where 'super_admin' role wasn't properly saved due to form choice mismatch
+- **SMTP Email Integration**: Enhanced email notification system with:
+  - Secure environment variable configuration (SMTP_USERNAME, SMTP_PASSWORD)
+  - Automatic email notifications when Super Admins assign tickets to users
+  - Proper error handling and logging for troubleshooting
+  - Support for Gmail and other SMTP providers
+- **JavaScript Fixes**: Resolved GTNHelpdesk.addCharacterCounter errors in user edit forms
+
 ### June 27, 2025 - Replit Migration & Enhanced Features
 - **Replit Integration**: Successfully migrated to Replit environment with automatic PostgreSQL provisioning
 - **Enhanced Ticket History**: Updated ticket history display with new format:
@@ -408,5 +432,5 @@ If you encounter issues not covered in this guide:
 
 ---
 
-**Last Updated**: June 27, 2025  
+**Last Updated**: June 28, 2025  
 **Compatible with**: PostgreSQL 15, 16+ on Replit and local development environments

@@ -5,6 +5,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
+from utils.timezone import utc_to_ist
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -45,6 +46,9 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Initialize the app with the extension
 db.init_app(app)
 
+@app.template_filter('to_ist')
+def to_ist_filter(dt):
+    return utc_to_ist(dt).strftime('%Y-%m-%d %H:%M:%S') if dt else ''
 
 # Add custom Jinja2 filter for line breaks
 @app.template_filter('nl2br')

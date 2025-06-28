@@ -19,7 +19,7 @@ CREATE TABLE users (
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     department VARCHAR(100),
-    role VARCHAR(20) DEFAULT 'user',
+    role VARCHAR(50) NOT NULL DEFAULT 'User',
     is_admin BOOLEAN DEFAULT FALSE,
     ip_address VARCHAR(45),
     system_name VARCHAR(100),
@@ -68,6 +68,7 @@ CREATE TABLE tickets (
     image_filename VARCHAR(255),
     user_id INTEGER NOT NULL REFERENCES users(id),
     assigned_to INTEGER REFERENCES users(id),
+    assigned_by INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP
@@ -87,6 +88,7 @@ CREATE TABLE tickets (
 - **image_filename**: Optional uploaded image filename
 - **user_id**: Foreign key to users table (ticket creator)
 - **assigned_to**: Foreign key to users table (assigned admin)
+- **assigned_by**: Foreign key to users table (who assigned the ticket)
 - **created_at**: Ticket creation timestamp
 - **updated_at**: Last modification timestamp
 - **resolved_at**: Resolution timestamp (null if not resolved)
@@ -95,6 +97,7 @@ CREATE TABLE tickets (
 ```sql
 CREATE INDEX idx_tickets_user_id ON tickets(user_id);
 CREATE INDEX idx_tickets_assigned_to ON tickets(assigned_to);
+CREATE INDEX idx_tickets_assigned_by ON tickets(assigned_by);
 CREATE INDEX idx_tickets_status ON tickets(status);
 CREATE INDEX idx_tickets_category ON tickets(category);
 CREATE INDEX idx_tickets_priority ON tickets(priority);
@@ -185,6 +188,9 @@ CREATE INDEX idx_attachments_uploaded_at ON attachments(uploaded_at);
    - One ticket can have multiple attachments
    - CASCADE DELETE: Attachments are deleted when ticket is deleted
 
+### Email Notification Integration:
+The `tickets.assigned_by` field enables automatic email notifications when Super Admins assign tickets to users. The email functionality is handled by the application layer using SMTP configuration stored in environment variables.
+
 ## Database Setup Commands
 
 ### Initial Table Creation:
@@ -226,6 +232,8 @@ CREATE TABLE tickets (
     resolved_at TIMESTAMP
 );
 
+ALTER TABLE tickets ADD COLUMN assigned_by INTEGER REFERENCES users(id);
+
 -- Create Ticket Comments table
 CREATE TABLE ticket_comments (
     id SERIAL PRIMARY KEY,
@@ -234,6 +242,10 @@ CREATE TABLE ticket_comments (
     comment TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+UPDATE users SET role = 'user' WHERE role = 'User';
+UPDATE users SET role = 'admin' WHERE role = 'Admin';
+UPDATE users SET role = 'super_admin' WHERE role = 'Superadmin';
 ```
 
 ### Create Indexes for Performance:

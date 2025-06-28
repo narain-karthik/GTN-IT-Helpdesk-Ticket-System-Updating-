@@ -66,16 +66,14 @@
                                                                 onclick="viewUser({{ user.id }})" title="View Details">
                                                             <i class="ri-eye-line"></i>
                                                         </button>
-                                                        {% if user.role != 'super_admin' %}
-                                                            <button type="button" class="btn btn-sm btn-outline-warning" 
-                                                                    onclick="editUser({{ user.id }})" title="Edit User">
-                                                                <i class="ri-edit-line"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                                    onclick="deleteUser({{ user.id }})" title="Delete User">
-                                                                <i class="ri-delete-bin-line"></i>
-                                                            </button>
-                                                        {% endif %}
+                                                        <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                                onclick="editUser({{ user.id }})" title="Edit User">
+                                                            <i class="ri-edit-line"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                                onclick="deleteUser({{ user.id }})" title="Delete User">
+                                                            <i class="ri-delete-bin-line"></i>
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>

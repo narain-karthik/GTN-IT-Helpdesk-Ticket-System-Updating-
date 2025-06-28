@@ -95,8 +95,9 @@
                         <p><strong>System Name:</strong><br>
                         <code>{{ user.system_name or 'Not detected' }}</code></p>
                         
-                        <p><strong>Last Login:</strong><br>
-                        {{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                       <p><strong>Last Login:</strong><br>
+                        {{ user.created_at|to_ist }}
+                        </p>
                         
                         <p><strong>Role:</strong><br>
                         <span class="badge bg-info">{{ user.role.title() }}</span></p>

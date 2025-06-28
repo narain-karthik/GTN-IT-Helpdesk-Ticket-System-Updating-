@@ -1,8 +1,13 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, TextAreaField, SelectField, SubmitField, EmailField
+from wtforms import  TextAreaField, SelectField, SubmitField, EmailField
 from wtforms.validators import DataRequired, Email, Length, EqualTo
 from models import User
+from flask_wtf import FlaskForm
+from wtforms import StringField, SelectField, SubmitField, PasswordField
+from wtforms.fields import EmailField
+from wtforms.validators import DataRequired, Email, Length, Optional
+from wtforms import SelectField
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=80)])
@@ -69,11 +74,14 @@ class UserRegistrationForm(FlaskForm):
     submit = SubmitField('Register')
 
 class UserProfileForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=50)])
+    role = SelectField('Role', choices=[('user', 'User'), ('admin', 'Admin'), ('super_admin', 'Super Admin')], validators=[DataRequired()])
     first_name = StringField('First Name', validators=[DataRequired(), Length(min=2, max=50)])
     last_name = StringField('Last Name', validators=[DataRequired(), Length(min=2, max=50)])
     email = EmailField('Email', validators=[DataRequired(), Email()])
     department = StringField('Department', validators=[Length(max=100)])
     system_name = StringField('System Name', validators=[Length(max=100)])
+    password = PasswordField('Password', validators=[Optional(), Length(min=6, max=128)])
     submit = SubmitField('Update Profile')
 
 class AssignTicketForm(FlaskForm):

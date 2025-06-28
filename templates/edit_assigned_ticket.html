@@ -115,9 +115,9 @@
                             <code>{{ ticket.user_system_name or 'Not captured' }}</code>
                         </div>
                         <div class="mb-3">
-                            <strong>Created:</strong><br>
-                            {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}
-                        </div>
+    <strong>Created:</strong><br>
+    {{ ticket.created_at|to_ist }}
+</div>
                         {% if ticket.assigned_to %}
                             <div class="mb-3">
                                 <strong>Assigned to:</strong><br>
