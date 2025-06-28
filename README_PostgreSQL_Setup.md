@@ -190,6 +190,10 @@ CREATE TABLE ticket_comments (
     comment TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+UPDATE users SET role = 'user' WHERE role = 'User';
+UPDATE users SET role = 'admin' WHERE role = 'Admin';
+UPDATE users SET role = 'super_admin' WHERE role = 'Superadmin';
 ```
 
 ### Step 4.2: New Features (Updated Schema)
