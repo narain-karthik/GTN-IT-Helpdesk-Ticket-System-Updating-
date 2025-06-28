@@ -432,5 +432,9 @@ If you encounter issues not covered in this guide:
 
 ---
 
+<<<<<<< HEAD
 **Last Updated**: June 28, 2025  
+=======
+**Last Updated**: June 27, 2025  
+>>>>>>> f93671220b9b3b879b7ab9f91552cc7d04c5a137
 **Compatible with**: PostgreSQL 15, 16+ on Replit and local development environments
