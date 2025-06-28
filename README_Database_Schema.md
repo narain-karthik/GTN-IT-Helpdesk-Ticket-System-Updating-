@@ -228,6 +228,8 @@ CREATE TABLE tickets (
     resolved_at TIMESTAMP
 );
 
+ALTER TABLE tickets ADD COLUMN assigned_by INTEGER REFERENCES users(id);
+
 -- Create Ticket Comments table
 CREATE TABLE ticket_comments (
     id SERIAL PRIMARY KEY,
